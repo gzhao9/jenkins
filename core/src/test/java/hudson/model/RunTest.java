@@ -31,7 +31,6 @@ import static org.junit.Assert.assertTrue;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.console.AnnotatedLargeText;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
