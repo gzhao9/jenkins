@@ -246,9 +246,9 @@ public class RunTest {
 
     private void assertWriteLogToEquals(String expectedOutput, long offset) throws Exception {
         try (
-                ByteBuffer buf = new ByteBuffer();
-                PrintStream ps = new PrintStream(buf, true);
-                StringWriter writer = new StringWriter()
+            ByteBuffer buf = new ByteBuffer();
+            PrintStream ps = new PrintStream(buf, true);
+            StringWriter writer = new StringWriter()
         ) {
             for (int i = 0; i < 5; i++) {
                 ps.print(SAMPLE_BUILD_OUTPUT);
