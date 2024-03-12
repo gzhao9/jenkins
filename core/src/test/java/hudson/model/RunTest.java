@@ -32,6 +32,7 @@ import static org.junit.Assert.assertTrue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.console.AnnotatedLargeText;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -163,35 +164,21 @@ public class RunTest {
     @SuppressWarnings("deprecation")
     @Test
     public void getLogReturnsAnEmptyListWhenCalledWith0() throws Exception {
-        Job j = Mockito.mock(Job.class);
-        File tempBuildDir = tmp.newFolder();
-        Mockito.when(j.getBuildDir()).thenReturn(tempBuildDir);
-        Run<? extends Job<?, ?>, ? extends Run<?, ?>> r = new Run(j, 0) {};
-        File f = r.getLogFile();
-        f.getParentFile().mkdirs();
-        PrintWriter w = new PrintWriter(f, StandardCharsets.UTF_8);
-        w.println("dummy");
-        w.close();
-        List<String> logLines = r.getLog(0);
+        List<String> logLines = getLogLines(0,w->{
+            w.println("dummy");
+            w.close();
+        });
         assertTrue(logLines.isEmpty());
     }
 
     @SuppressWarnings("deprecation")
     @Test
     public void getLogReturnsAnRightOrder() throws Exception {
-        Job j = Mockito.mock(Job.class);
-        File tempBuildDir = tmp.newFolder();
-        Mockito.when(j.getBuildDir()).thenReturn(tempBuildDir);
-        Run<? extends Job<?, ?>, ? extends Run<?, ?>> r = new Run(j, 0) {};
-        File f = r.getLogFile();
-        f.getParentFile().mkdirs();
-        PrintWriter w = new PrintWriter(f, StandardCharsets.UTF_8);
-        for (int i = 0; i < 20; i++) {
-            w.println("dummy" + i);
-        }
-
-        w.close();
-        List<String> logLines = r.getLog(10);
+        List<String> logLines = getLogLines(10,w->{
+            for (int i = 0; i < 20; i++) {
+                w.println("dummy" + i);
+            }
+        });
         assertFalse(logLines.isEmpty());
 
         for (int i = 1; i < 10; i++) {
@@ -204,18 +191,11 @@ public class RunTest {
     @SuppressWarnings("deprecation")
     @Test
     public void getLogReturnsAllLines() throws Exception {
-        Job j = Mockito.mock(Job.class);
-        File tempBuildDir = tmp.newFolder();
-        Mockito.when(j.getBuildDir()).thenReturn(tempBuildDir);
-        Run<? extends Job<?, ?>, ? extends Run<?, ?>> r = new Run(j, 0) {};
-        File f = r.getLogFile();
-        f.getParentFile().mkdirs();
-        PrintWriter w = new PrintWriter(f, StandardCharsets.UTF_8);
-        w.print("a1\nb2\n\nc3");
-        w.close();
-        List<String> logLines = r.getLog(10);
+        List<String> logLines = getLogLines(10,w->{
+            w.print("a1\nb2\n\nc3");
+            w.close();
+        });
         assertFalse(logLines.isEmpty());
-
         assertEquals("a1", logLines.get(0));
         assertEquals("b2", logLines.get(1));
         assertEquals("", logLines.get(2));
@@ -224,16 +204,8 @@ public class RunTest {
 
     @Test
     public void compareRunsFromSameJobWithDifferentNumbers() throws Exception {
-        final Jenkins group = Mockito.mock(Jenkins.class);
-        Mockito.when(group.getFullName()).thenReturn("j");
-        final Job j = Mockito.mock(Job.class);
-
-        Mockito.when(j.getParent()).thenReturn(group);
-        Mockito.when(j.getFullName()).thenReturn("Mock job");
-        Mockito.when(j.assignBuildNumber()).thenReturn(1, 2);
-
-        Run r1 = new Run(j) {};
-        Run r2 = new Run(j) {};
+        Run r1 = new Run(getJob("j","Mock job",1)) {};
+        Run r2 = new Run(getJob("j","Mock job",2)) {};
 
         final Set<Run> treeSet = new TreeSet<>();
         treeSet.add(r1);
@@ -246,21 +218,8 @@ public class RunTest {
     @Issue("JENKINS-42319")
     @Test
     public void compareRunsFromDifferentParentsWithSameNumber() throws Exception {
-        final Jenkins group1 = Mockito.mock(Jenkins.class);
-        final Jenkins group2 = Mockito.mock(Jenkins.class);
-        final Job j1 = Mockito.mock(Job.class);
-        final Job j2 = Mockito.mock(Job.class);
-        Mockito.when(j1.getParent()).thenReturn(group1);
-        Mockito.when(j1.getFullName()).thenReturn("Mock job");
-        Mockito.when(j2.getParent()).thenReturn(group2);
-        Mockito.when(j2.getFullName()).thenReturn("Mock job2");
-        Mockito.when(group1.getFullName()).thenReturn("g1");
-        Mockito.when(group2.getFullName()).thenReturn("g2");
-        Mockito.when(j1.assignBuildNumber()).thenReturn(1);
-        Mockito.when(j2.assignBuildNumber()).thenReturn(1);
-
-        Run r1 = new Run(j1) {};
-        Run r2 = new Run(j2) {};
+        Run r1 = new Run(getJob("g1","Mock job",1)) {};
+        Run r2 = new Run(getJob("g2","Mock job2",1)) {};
 
         final Set<Run> treeSet = new TreeSet<>();
         treeSet.add(r1);
@@ -314,5 +273,32 @@ public class RunTest {
             r.writeLogTo(offset, xmlOutput);
             assertEquals(expectedOutput, writer.toString());
         }
+    }
+    private Job getJob(String groupName,String jobName,int value) throws IOException {
+        final Jenkins group = Mockito.mock(Jenkins.class);
+        Mockito.when(group.getFullName()).thenReturn(groupName);
+        final Job j = Mockito.mock(Job.class);
+
+        Mockito.when(j.getParent()).thenReturn(group);
+        Mockito.when(j.getFullName()).thenReturn(jobName);
+        Mockito.when(j.assignBuildNumber()).thenReturn(value);
+
+        return j;
+    }
+    private List<String> getLogLines(int maxLines,PrintWriterActions printwriter) throws IOException {
+        Job j = Mockito.mock(Job.class);
+        File tempBuildDir = tmp.newFolder();
+        Mockito.when(j.getBuildDir()).thenReturn(tempBuildDir);
+        Run<? extends Job<?, ?>, ? extends Run<?, ?>> r = new Run(j, 0) {};
+        File f = r.getLogFile();
+        f.getParentFile().mkdirs();
+        PrintWriter w = new PrintWriter(f, StandardCharsets.UTF_8);
+        printwriter.action(w);
+        w.close();
+        List<String> logLines = r.getLog(maxLines);
+        return logLines;
+    }
+    interface PrintWriterActions{
+        void action(PrintWriter printwriter);
     }
 }
