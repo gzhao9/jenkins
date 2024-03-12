@@ -31,11 +31,8 @@ import static org.junit.Assert.assertTrue;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.console.AnnotatedLargeText;
-import java.io.File;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
@@ -163,35 +160,21 @@ public class RunTest {
     @SuppressWarnings("deprecation")
     @Test
     public void getLogReturnsAnEmptyListWhenCalledWith0() throws Exception {
-        Job j = Mockito.mock(Job.class);
-        File tempBuildDir = tmp.newFolder();
-        Mockito.when(j.getBuildDir()).thenReturn(tempBuildDir);
-        Run<? extends Job<?, ?>, ? extends Run<?, ?>> r = new Run(j, 0) {};
-        File f = r.getLogFile();
-        f.getParentFile().mkdirs();
-        PrintWriter w = new PrintWriter(f, StandardCharsets.UTF_8);
-        w.println("dummy");
-        w.close();
-        List<String> logLines = r.getLog(0);
+        List<String> logLines = getLogLines(0,w->{
+            w.println("dummy");
+            w.close();
+        });
         assertTrue(logLines.isEmpty());
     }
 
     @SuppressWarnings("deprecation")
     @Test
     public void getLogReturnsAnRightOrder() throws Exception {
-        Job j = Mockito.mock(Job.class);
-        File tempBuildDir = tmp.newFolder();
-        Mockito.when(j.getBuildDir()).thenReturn(tempBuildDir);
-        Run<? extends Job<?, ?>, ? extends Run<?, ?>> r = new Run(j, 0) {};
-        File f = r.getLogFile();
-        f.getParentFile().mkdirs();
-        PrintWriter w = new PrintWriter(f, StandardCharsets.UTF_8);
-        for (int i = 0; i < 20; i++) {
-            w.println("dummy" + i);
-        }
-
-        w.close();
-        List<String> logLines = r.getLog(10);
+        List<String> logLines = getLogLines(10,w->{
+            for (int i = 0; i < 20; i++) {
+                w.println("dummy" + i);
+            }
+        });
         assertFalse(logLines.isEmpty());
 
         for (int i = 1; i < 10; i++) {
@@ -204,18 +187,11 @@ public class RunTest {
     @SuppressWarnings("deprecation")
     @Test
     public void getLogReturnsAllLines() throws Exception {
-        Job j = Mockito.mock(Job.class);
-        File tempBuildDir = tmp.newFolder();
-        Mockito.when(j.getBuildDir()).thenReturn(tempBuildDir);
-        Run<? extends Job<?, ?>, ? extends Run<?, ?>> r = new Run(j, 0) {};
-        File f = r.getLogFile();
-        f.getParentFile().mkdirs();
-        PrintWriter w = new PrintWriter(f, StandardCharsets.UTF_8);
-        w.print("a1\nb2\n\nc3");
-        w.close();
-        List<String> logLines = r.getLog(10);
+        List<String> logLines = getLogLines(10,w->{
+            w.print("a1\nb2\n\nc3");
+            w.close();
+        });
         assertFalse(logLines.isEmpty());
-
         assertEquals("a1", logLines.get(0));
         assertEquals("b2", logLines.get(1));
         assertEquals("", logLines.get(2));
@@ -314,5 +290,22 @@ public class RunTest {
             r.writeLogTo(offset, xmlOutput);
             assertEquals(expectedOutput, writer.toString());
         }
+    }
+
+    private List<String> getLogLines(int maxLines,PrintWriterActions printwriter) throws IOException {
+        Job j = Mockito.mock(Job.class);
+        File tempBuildDir = tmp.newFolder();
+        Mockito.when(j.getBuildDir()).thenReturn(tempBuildDir);
+        Run<? extends Job<?, ?>, ? extends Run<?, ?>> r = new Run(j, 0) {};
+        File f = r.getLogFile();
+        f.getParentFile().mkdirs();
+        PrintWriter w = new PrintWriter(f, StandardCharsets.UTF_8);
+        printwriter.action(w);
+        w.close();
+        List<String> logLines = r.getLog(maxLines);
+        return logLines;
+    }
+    interface PrintWriterActions{
+        void action(PrintWriter printwriter);
     }
 }
