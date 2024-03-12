@@ -62,11 +62,11 @@ import org.mockito.Mockito;
 public class ApiTokenStatsTest {
     @Rule
     public TemporaryFolder tmp = new TemporaryFolder();
-
+    ApiTokenPropertyConfiguration mockConfig;
     @Before
     public void prepareConfig() {
         // to separate completely the class under test from its environment
-        ApiTokenPropertyConfiguration mockConfig = Mockito.mock(ApiTokenPropertyConfiguration.class);
+        mockConfig = Mockito.mock(ApiTokenPropertyConfiguration.class);
 
     }
 
@@ -75,7 +75,6 @@ public class ApiTokenStatsTest {
         final String ID_1 = UUID.randomUUID().toString();
         final String ID_2 = "other-uuid";
 
-        ApiTokenPropertyConfiguration mockConfig = mock(ApiTokenPropertyConfiguration.class);
         try (MockedStatic<ApiTokenPropertyConfiguration> mocked = mockStatic(ApiTokenPropertyConfiguration.class)) {
             mocked.when(ApiTokenPropertyConfiguration::get).thenReturn(mockConfig);
             Mockito.when(mockConfig.isUsageStatisticsEnabled()).thenReturn(true);
@@ -168,7 +167,6 @@ public class ApiTokenStatsTest {
 
     @Test
     public void testResilientIfFileDoesNotExist() {
-        ApiTokenPropertyConfiguration mockConfig = mock(ApiTokenPropertyConfiguration.class);
         try (MockedStatic<ApiTokenPropertyConfiguration> mocked = mockStatic(ApiTokenPropertyConfiguration.class)) {
             mocked.when(ApiTokenPropertyConfiguration::get).thenReturn(mockConfig);
             Mockito.when(mockConfig.isUsageStatisticsEnabled()).thenReturn(true);
@@ -183,7 +181,6 @@ public class ApiTokenStatsTest {
         final String ID_2 = UUID.randomUUID().toString();
         final String ID_3 = UUID.randomUUID().toString();
 
-        ApiTokenPropertyConfiguration mockConfig = mock(ApiTokenPropertyConfiguration.class);
         try (MockedStatic<ApiTokenPropertyConfiguration> mocked = mockStatic(ApiTokenPropertyConfiguration.class)) {
             mocked.when(ApiTokenPropertyConfiguration::get).thenReturn(mockConfig);
             Mockito.when(mockConfig.isUsageStatisticsEnabled()).thenReturn(true);
@@ -230,7 +227,6 @@ public class ApiTokenStatsTest {
     public void resistantToDuplicatedUuid_withNull() throws Exception {
         final String ID = "ID";
 
-        ApiTokenPropertyConfiguration mockConfig = mock(ApiTokenPropertyConfiguration.class);
         try (MockedStatic<ApiTokenPropertyConfiguration> mocked = mockStatic(ApiTokenPropertyConfiguration.class)) {
             mocked.when(ApiTokenPropertyConfiguration::get).thenReturn(mockConfig);
             Mockito.when(mockConfig.isUsageStatisticsEnabled()).thenReturn(true);
@@ -269,7 +265,6 @@ public class ApiTokenStatsTest {
                 createSingleTokenStatsByReflection("D", "2018-05-01 09:10:59.235", 1)
         );
 
-        ApiTokenPropertyConfiguration mockConfig = mock(ApiTokenPropertyConfiguration.class);
         try (MockedStatic<ApiTokenPropertyConfiguration> mocked = mockStatic(ApiTokenPropertyConfiguration.class)) {
             mocked.when(ApiTokenPropertyConfiguration::get).thenReturn(mockConfig);
             Mockito.when(mockConfig.isUsageStatisticsEnabled()).thenReturn(true);
@@ -314,7 +309,6 @@ public class ApiTokenStatsTest {
     @Test
     public void testDayDifference() throws Exception {
         final String ID = UUID.randomUUID().toString();
-        ApiTokenPropertyConfiguration mockConfig = mock(ApiTokenPropertyConfiguration.class);
         try (MockedStatic<ApiTokenPropertyConfiguration> mocked = mockStatic(ApiTokenPropertyConfiguration.class)) {
             mocked.when(ApiTokenPropertyConfiguration::get).thenReturn(mockConfig);
             Mockito.when(mockConfig.isUsageStatisticsEnabled()).thenReturn(true);
