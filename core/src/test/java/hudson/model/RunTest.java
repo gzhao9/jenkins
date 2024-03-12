@@ -32,7 +32,12 @@ import static org.junit.Assert.assertTrue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.console.AnnotatedLargeText;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
@@ -242,9 +247,9 @@ public class RunTest {
 
     private void assertWriteLogToEquals(String expectedOutput, long offset) throws Exception {
         try (
-            ByteBuffer buf = new ByteBuffer();
-            PrintStream ps = new PrintStream(buf, true);
-            StringWriter writer = new StringWriter()
+                ByteBuffer buf = new ByteBuffer();
+                PrintStream ps = new PrintStream(buf, true);
+                StringWriter writer = new StringWriter()
         ) {
             for (int i = 0; i < 5; i++) {
                 ps.print(SAMPLE_BUILD_OUTPUT);
