@@ -200,16 +200,8 @@ public class RunTest {
 
     @Test
     public void compareRunsFromSameJobWithDifferentNumbers() throws Exception {
-        final Jenkins group = Mockito.mock(Jenkins.class);
-        Mockito.when(group.getFullName()).thenReturn("j");
-        final Job j = Mockito.mock(Job.class);
-
-        Mockito.when(j.getParent()).thenReturn(group);
-        Mockito.when(j.getFullName()).thenReturn("Mock job");
-        Mockito.when(j.assignBuildNumber()).thenReturn(1, 2);
-
-        Run r1 = new Run(j) {};
-        Run r2 = new Run(j) {};
+        Run r1 = new Run(getJob("j","Mock job",1)) {};
+        Run r2 = new Run(getJob("j","Mock job",2)) {};
 
         final Set<Run> treeSet = new TreeSet<>();
         treeSet.add(r1);
@@ -222,21 +214,8 @@ public class RunTest {
     @Issue("JENKINS-42319")
     @Test
     public void compareRunsFromDifferentParentsWithSameNumber() throws Exception {
-        final Jenkins group1 = Mockito.mock(Jenkins.class);
-        final Jenkins group2 = Mockito.mock(Jenkins.class);
-        final Job j1 = Mockito.mock(Job.class);
-        final Job j2 = Mockito.mock(Job.class);
-        Mockito.when(j1.getParent()).thenReturn(group1);
-        Mockito.when(j1.getFullName()).thenReturn("Mock job");
-        Mockito.when(j2.getParent()).thenReturn(group2);
-        Mockito.when(j2.getFullName()).thenReturn("Mock job2");
-        Mockito.when(group1.getFullName()).thenReturn("g1");
-        Mockito.when(group2.getFullName()).thenReturn("g2");
-        Mockito.when(j1.assignBuildNumber()).thenReturn(1);
-        Mockito.when(j2.assignBuildNumber()).thenReturn(1);
-
-        Run r1 = new Run(j1) {};
-        Run r2 = new Run(j2) {};
+        Run r1 = new Run(getJob("g1","Mock job",1)) {};
+        Run r2 = new Run(getJob("g2","Mock job2",1)) {};
 
         final Set<Run> treeSet = new TreeSet<>();
         treeSet.add(r1);
@@ -291,7 +270,17 @@ public class RunTest {
             assertEquals(expectedOutput, writer.toString());
         }
     }
+    private Job getJob(String groupName,String jobName,int value) throws IOException {
+        final Jenkins group = Mockito.mock(Jenkins.class);
+        Mockito.when(group.getFullName()).thenReturn(groupName);
+        final Job j = Mockito.mock(Job.class);
 
+        Mockito.when(j.getParent()).thenReturn(group);
+        Mockito.when(j.getFullName()).thenReturn(jobName);
+        Mockito.when(j.assignBuildNumber()).thenReturn(value);
+
+        return j;
+    }
     private List<String> getLogLines(int maxLines,PrintWriterActions printwriter) throws IOException {
         Job j = Mockito.mock(Job.class);
         File tempBuildDir = tmp.newFolder();
